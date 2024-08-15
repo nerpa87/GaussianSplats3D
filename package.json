@@ -13,7 +13,7 @@
     "type": "module",
     "scripts": {
         "install": "npm run build",
-        "build": "pwd && ls -la . && npx rollup -c && mkdir -p ./build/demo/lib && cp ./build/gaussian-splats-3d.module.* ./build/demo/lib/"
+        "build": "npx rollup -c && mkdir -p ./build/demo/lib && cp ./build/gaussian-splats-3d.module.* ./build/demo/lib/"
     },
     "watch": {
         "build-library": {
