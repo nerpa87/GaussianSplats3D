@@ -280,6 +280,7 @@ export class Viewer {
                 this.rootElement.style.width = '100%';
                 this.rootElement.style.height = '100%';
                 this.rootElement.style.position = 'absolute';
+                this.rootElement.style.background = '#000';
                 document.body.appendChild(this.rootElement);
             } else {
                 this.rootElement = this.renderer.domElement.parentElement || document.body;
