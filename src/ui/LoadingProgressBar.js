@@ -84,7 +84,7 @@ export class LoadingProgressBar {
     }
 
     setContainer(container) {
-        if (this.container) {
+        if (this.container && this.progressBarContainerOuter.parentElement === this.container) {
             this.container.removeChild(this.progressBarContainerOuter);
         }
         if (container) {

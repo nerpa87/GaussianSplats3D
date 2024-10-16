@@ -108,8 +108,16 @@ export class DropInViewer extends THREE.Group {
         return this.viewer.removeSplatScenes(indexes, showLoadingUI);
     }
 
-    dispose() {
-        return this.viewer.dispose();
+    getSceneCount() {
+        return this.viewer.getSceneCount();
+    }
+
+    setActiveSphericalHarmonicsDegrees(activeSphericalHarmonicsDegrees) {
+        this.viewer.setActiveSphericalHarmonicsDegrees(activeSphericalHarmonicsDegrees);
+    }
+
+    async dispose() {
+        return await this.viewer.dispose();
     }
 
     static onBeforeRender(viewer, renderer, threeScene, camera) {
