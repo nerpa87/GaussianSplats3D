@@ -1,4 +1,5 @@
 #include <emscripten/emscripten.h>
+#include <emscripten/console.h>
 #include <iostream>
 #include <wasm_simd128.h>
 
@@ -26,6 +27,7 @@ EXTERN EMSCRIPTEN_KEEPALIVE void sortIndexes(unsigned int* indexes, void* center
 
     float fMVPTRow3[4]; 
     unsigned int sortStart = renderCount - sortCount;
+    emscripten_console_log("start sortIndexes");
     if (useIntegerSort) {
         int* intCenters = (int*)centers;
         if (usePrecomputedDistances) {
@@ -75,8 +77,10 @@ EXTERN EMSCRIPTEN_KEEPALIVE void sortIndexes(unsigned int* indexes, void* center
             }
         }
     } else {
+        emscripten_console_log("sortIndexes float");
         float* floatCenters = (float*)centers;
         if (usePrecomputedDistances) {
+            emscripten_console_log("usePrecomputedDistances");
             float* floatPrecomputedDistances = (float*)precomputedDistances;
             for (unsigned int i = sortStart; i < renderCount; i++) {
                 int distance = (int)(floatPrecomputedDistances[indexes[i]] * 4096.0);
@@ -85,6 +89,7 @@ EXTERN EMSCRIPTEN_KEEPALIVE void sortIndexes(unsigned int* indexes, void* center
                 if (distance < minDistance) minDistance = distance;
             }
         } else {
+            emscripten_console_log("no usePrecomputedDistances");
             float* fMVP = (float*)modelViewProj;
             float* floatTransforms = (float *)transforms;
 
@@ -105,6 +110,7 @@ EXTERN EMSCRIPTEN_KEEPALIVE void sortIndexes(unsigned int* indexes, void* center
             */
 
             if (dynamicMode) {
+                emscripten_console_log("dynamicMode");
                 int lastTransformIndex = -1;
                 for (unsigned int i = sortStart; i < renderCount; i++) {
                     unsigned int realIndex = indexes[i];
@@ -125,6 +131,7 @@ EXTERN EMSCRIPTEN_KEEPALIVE void sortIndexes(unsigned int* indexes, void* center
                     if (distance < minDistance) minDistance = distance;
                 }
             } else {
+                emscripten_console_log("no dynamicMode");
                 for (unsigned int i = sortStart; i < renderCount; i++) {
                     unsigned int indexOffset = 4 * (unsigned int)indexes[i];
                     int distance =
@@ -139,6 +146,7 @@ EXTERN EMSCRIPTEN_KEEPALIVE void sortIndexes(unsigned int* indexes, void* center
         }
     }
 
+    emscripten_console_log("end 1");
     float distancesRange = (float)maxDistance - (float)minDistance;
     float rangeMap = (float)(distanceMapRange - 1) / distancesRange;
 
@@ -148,6 +156,7 @@ EXTERN EMSCRIPTEN_KEEPALIVE void sortIndexes(unsigned int* indexes, void* center
         frequencies[frequenciesIndex] = frequencies[frequenciesIndex] + 1;   
     }
 
+    emscripten_console_log("end 2");
     unsigned int cumulativeFreq = frequencies[0];
     for (unsigned int i = 1; i < distanceMapRange; i++) {
         unsigned int freq = frequencies[i];
@@ -155,14 +164,17 @@ EXTERN EMSCRIPTEN_KEEPALIVE void sortIndexes(unsigned int* indexes, void* center
         frequencies[i] = cumulativeFreq;
     }
 
+    emscripten_console_log("end 3");
     for (int i = (int)sortStart - 1; i >= 0; i--) {
         indexesOut[i] = indexes[i];
     }
 
+    emscripten_console_log("end 4");
     for (int i = (int)renderCount - 1; i >= (int)sortStart; i--) {
         unsigned int frequenciesIndex = mappedDistances[i];
         unsigned int freq = frequencies[frequenciesIndex];
         indexesOut[renderCount - freq] = indexes[i];
         frequencies[frequenciesIndex] = freq - 1;
     }
+    emscripten_console_log("end 5");
 }
