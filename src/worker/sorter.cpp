@@ -1,7 +1,7 @@
 #include <emscripten/emscripten.h>
 // #include <emscripten/console.h>
 #include <iostream>
-#include <stdio.h>
+// #include <stdio.h>
 #include <wasm_simd128.h>
 
 #ifdef __cplusplus
