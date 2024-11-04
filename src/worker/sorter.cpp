@@ -26,6 +26,7 @@ EXTERN EMSCRIPTEN_KEEPALIVE void sortIndexes(unsigned int* indexes, void* center
 
     float fMVPTRow3[4]; 
     unsigned int sortStart = renderCount - sortCount;
+    printf("some test string");
     if (useIntegerSort) {
         int* intCenters = (int*)centers;
         if (usePrecomputedDistances) {

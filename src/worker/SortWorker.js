@@ -159,6 +159,7 @@ function sortWorker(self) {
                         maximum: totalPagesRequired,
                         shared: true,
                     }),
+                    iprintf: console.log
                 }
             };
             WebAssembly.compile(sorterWasmBytes)
