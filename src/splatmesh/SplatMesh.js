@@ -288,6 +288,8 @@ export class SplatMesh extends THREE.Mesh {
      *         rotation (Array<number>):   Rotation of the scene represented as a quaternion, defaults to [0, 0, 0, 1]
      *
      *         scale (Array<number>):      Scene's scale, defaults to [1, 1, 1]
+     * 
+     *         skipSplatTreeBuilding:      Whether building of splat octree should be skipped, boolean
      *
      * }
      * @param {boolean} keepSceneTransforms For a scene that already exists and is being overwritten, this flag
@@ -387,12 +389,18 @@ export class SplatMesh extends THREE.Mesh {
         this.lastBuildSceneCount = this.scenes.length;
 
         if (finalBuild && this.scenes.length > 0) {
-            this.buildSplatTree(sceneOptions.map(options => options.splatAlphaRemovalThreshold || 1),
-                                onSplatTreeIndexesUpload, onSplatTreeConstruction)
-            .then(() => {
-                if (this.onSplatTreeReadyCallback) this.onSplatTreeReadyCallback(this.splatTree);
-                this.onSplatTreeReadyCallback = null;
-            });
+            if (sceneOptions[0] && sceneOptions[0].skipSplatTreeBuilding) {  // currently we have 1 scene to render              
+                if (this.logLevel >= LogLevel.Info) {
+                    console.log(`buildSplatTree skipped, total splat count: ${this.getSplatCount(true)}`);
+                }
+            } else {
+                this.buildSplatTree(sceneOptions.map(options => options.splatAlphaRemovalThreshold || 1),
+                                    onSplatTreeIndexesUpload, onSplatTreeConstruction)
+                .then(() => {
+                    if (this.onSplatTreeReadyCallback) this.onSplatTreeReadyCallback(this.splatTree);
+                    this.onSplatTreeReadyCallback = null;
+                });
+            }
         }
 
         this.visible = (this.scenes.length > 0);

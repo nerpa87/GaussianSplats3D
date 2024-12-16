@@ -725,6 +725,8 @@ export class Viewer {
      *         scale (Array<number>):      Scene's scale, defaults to [1, 1, 1]
      *
      *         onProgress:                 Function to be called as file data are received, or other processing occurs
+     * 
+     *         skipSplatTreeBuilding:      Whether building of splat octree should be skipped, boolean
      *
      * }
      * @return {AbortablePromise}
@@ -809,6 +811,7 @@ export class Viewer {
                 'position': options.position,
                 'scale': options.scale,
                 'splatAlphaRemovalThreshold': options.splatAlphaRemovalThreshold,
+                'skipSplatTreeBuilding': options.skipSplatTreeBuilding,
             };
             return this.addSplatBuffers([splatBuffer], [addSplatBufferOptions],
                                          finalBuild, firstBuild && showLoadingUI, showLoadingUI,
