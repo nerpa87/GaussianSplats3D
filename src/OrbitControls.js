@@ -100,7 +100,7 @@ class OrbitControls extends EventDispatcher {
         this.autoRotateSpeed = 2.0; // 30 seconds per orbit when fps is 60
 
         // The four arrow keys
-        this.keys = { LEFT: 'KeyA', UP: 'KeyW', RIGHT: 'KeyD', BOTTOM: 'KeyS' };
+        this.keys = { LEFT: 'ArrowLeft', UP: 'ArrowUp', RIGHT: 'ArrowRight', BOTTOM: 'ArrowDown' };
 
         // Mouse buttons
         this.mouseButtons = { LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: MOUSE.PAN };
@@ -202,7 +202,6 @@ class OrbitControls extends EventDispatcher {
             const twoPI = 2 * Math.PI;
 
             return function update() {
-
                 quat.setFromUnitVectors( object.up, new Vector3( 0, 1, 0 ) );
                 quatInverse.copy(quat).invert();
 

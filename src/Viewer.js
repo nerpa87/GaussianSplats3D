@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Vector3 } from 'three';
 import { OrbitControls } from './OrbitControls.js';
 import { PlyLoader } from './loaders/ply/PlyLoader.js';
 import { SplatLoader } from './loaders/splat/SplatLoader.js';
@@ -405,7 +406,7 @@ export class Viewer {
                     controls.rotateSpeed = 0.5;
                     controls.maxPolarAngle = Math.PI * .75;
                     controls.minPolarAngle = 0.1;
-                    controls.enableDamping = true;
+                    controls.enableDamping = false; // true; // works weird now
                     controls.dampingFactor = 0.05;
                     controls.target.copy(this.initialCameraLookAt);
                     controls.update();
@@ -458,15 +459,80 @@ export class Viewer {
     onKeyDown = function() {
 
         const forward = new THREE.Vector3();
-        const tempMatrixLeft = new THREE.Matrix4();
-        const tempMatrixRight = new THREE.Matrix4();
+        const tempRollMatrixLeft = new THREE.Matrix4();
+        const tempRollMatrixRight = new THREE.Matrix4();
 
         return function(e) {
+
+            const updateTargetFromCamera = () => {
+                let vec = new Vector3(0, 0, -1);
+                vec.applyQuaternion(this.camera.quaternion);
+                this.controls.target = vec.add(this.camera.position);
+            }
+
             forward.set(0, 0, -1);
             forward.transformDirection(this.camera.matrixWorld);
-            tempMatrixLeft.makeRotationAxis(forward, Math.PI / 128);
-            tempMatrixRight.makeRotationAxis(forward, -Math.PI / 128);
+            tempRollMatrixLeft.makeRotationAxis(forward, Math.PI / 128);
+            tempRollMatrixRight.makeRotationAxis(forward, -Math.PI / 128);
+
+            let dp, target, vec;
             switch (e.code) {
+                // move camera
+                case 'KeyW':
+                case 'KeyS':
+                    target = this.controls.target.clone();
+                    const direction = target.sub(this.camera.position).normalize();
+                    dp = direction.multiplyScalar(((e.code == 'KeyS') ? -1 : 1) * 0.01);
+                    this.camera.position.add(dp);
+                    updateTargetFromCamera();
+                    break;
+                case 'KeyA':
+                case 'KeyD':
+                    vec = new Vector3(1, 0, 0);
+                    vec.applyQuaternion(this.camera.quaternion);
+                    dp  = vec.multiplyScalar(((e.code == 'KeyA') ? -1 : 1) * 0.01);
+                    this.camera.position.add(dp);
+                    updateTargetFromCamera();
+                    break;
+                case 'KeyQ':
+                case 'KeyE':
+                    vec = new Vector3(0, 1, 0);
+                    vec.applyQuaternion(this.camera.quaternion);
+                    dp  = vec.multiplyScalar(((e.code == 'KeyE') ? -1 : 1) * 0.01);
+                    this.camera.position.add(dp);
+                    updateTargetFromCamera();
+                    break;
+                // rotate camera
+                case 'KeyU':
+                    if (e.shiftKey) { // old behavior
+                        this.showControlPlane = !this.showControlPlane;
+                        break;
+                    }
+                    this.camera.up.transformDirection(tempRollMatrixLeft);
+                    break;
+                case 'KeyO':
+                    this.camera.up.transformDirection(tempRollMatrixRight);
+                    break;
+                case 'KeyI':
+                case 'KeyK':
+                    if (e.shiftKey && e.code == 'KeyI') { // old behavior
+                        this.showInfo = !this.showInfo;
+                        if (this.showInfo) {
+                            this.infoPanel.show();
+                        } else {
+                            this.infoPanel.hide();
+                        }
+                        break;
+                    }
+                    this.camera.rotateOnAxis(new Vector3(1,0,0), ((e.code == 'KeyK') ? -1 : 1) *  Math.PI / 128);
+                    updateTargetFromCamera();
+                    break;
+                case 'KeyL':
+                case 'KeyJ':
+                    this.camera.rotateOnAxis(new Vector3(0,1,0), ((e.code == 'KeyL') ? -1 : 1) *  Math.PI / 128);
+                    updateTargetFromCamera();
+                    break;
+                // ...
                 case 'KeyG':
                     this.focalAdjustment += 0.02;
                     this.forceRenderNextFrame();
@@ -475,25 +541,8 @@ export class Viewer {
                     this.focalAdjustment -= 0.02;
                     this.forceRenderNextFrame();
                 break;
-                case 'ArrowLeft':
-                    this.camera.up.transformDirection(tempMatrixLeft);
-                break;
-                case 'ArrowRight':
-                    this.camera.up.transformDirection(tempMatrixRight);
-                break;
                 case 'KeyC':
                     this.showMeshCursor = !this.showMeshCursor;
-                break;
-                case 'KeyU':
-                    this.showControlPlane = !this.showControlPlane;
-                break;
-                case 'KeyI':
-                    this.showInfo = !this.showInfo;
-                    if (this.showInfo) {
-                        this.infoPanel.show();
-                    } else {
-                        this.infoPanel.hide();
-                    }
                 break;
                 case 'KeyO':
                     if (!this.usingExternalCamera) {
@@ -1613,7 +1662,7 @@ export class Viewer {
 
         if (!this.initialized || !this.splatRenderReady || this.isDisposingOrDisposed()) return;
 
-        if (this.controls) {
+        if (this.controls && this.controls.enabled) {
             this.controls.update();
             if (this.camera.isOrthographicCamera && !this.usingExternalCamera) {
                 Viewer.setCameraPositionFromZoom(this.camera, this.camera, this.controls);
