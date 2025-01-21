@@ -508,10 +508,11 @@ export class Viewer {
                         this.showControlPlane = !this.showControlPlane;
                         break;
                     }
-                    this.camera.up.transformDirection(tempRollMatrixLeft);
+                    // because controls are connected with camera.up vector, not camera matrix, we can't apply camera's z rotation
+                    this.camera.up.transformDirection(tempRollMatrixRight);
                     break;
                 case 'KeyO':
-                    this.camera.up.transformDirection(tempRollMatrixRight);
+                    this.camera.up.transformDirection(tempRollMatrixLeft);
                     break;
                 case 'KeyI':
                 case 'KeyK':
@@ -531,6 +532,10 @@ export class Viewer {
                 case 'KeyJ':
                     this.camera.rotateOnAxis(new Vector3(0,1,0), ((e.code == 'KeyL') ? -1 : 1) *  Math.PI / 128);
                     updateTargetFromCamera();
+                    break;
+                // ... reset
+                case 'KeyR':
+                    this.controls.reset();
                     break;
                 // ...
                 case 'KeyG':

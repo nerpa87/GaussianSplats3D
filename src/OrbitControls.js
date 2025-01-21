@@ -111,6 +111,7 @@ class OrbitControls extends EventDispatcher {
         // for reset
         this.target0 = this.target.clone();
         this.position0 = this.object.position.clone();
+        this.up0 = this.object.up.clone();
         this.zoom0 = this.object.zoom;
 
         // the target DOM element for key events
@@ -165,6 +166,7 @@ class OrbitControls extends EventDispatcher {
             scope.target.copy( scope.target0 );
             scope.object.position.copy( scope.position0 );
             scope.object.zoom = scope.zoom0;
+            scope.object.up.copy( scope.up0 );
             this.clearDampedRotation();
             this.clearDampedPan();
 
