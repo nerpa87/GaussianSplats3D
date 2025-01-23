@@ -417,6 +417,8 @@ export class Viewer {
             }
             this.controls = this.camera.isOrthographicCamera ? this.orthographicControls : this.perspectiveControls;
             this.controls.update();
+
+            setTimeout(() => this.controls.setupInitialData(), 0);
         }
     }
 

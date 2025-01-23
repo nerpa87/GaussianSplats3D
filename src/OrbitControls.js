@@ -161,6 +161,13 @@ class OrbitControls extends EventDispatcher {
 
         };
 
+        this.setupInitialData = function() {
+            this.target0 = this.target.clone();
+            this.position0 = this.object.position.clone();
+            this.up0 = this.object.up.clone();
+            this.zoom0 = this.object.zoom;
+        }
+
         this.reset = function() {
 
             scope.target.copy( scope.target0 );
@@ -204,6 +211,8 @@ class OrbitControls extends EventDispatcher {
             const twoPI = 2 * Math.PI;
 
             return function update() {
+                const prevSpherical = spherical.clone();
+
                 quat.setFromUnitVectors( object.up, new Vector3( 0, 1, 0 ) );
                 quatInverse.copy(quat).invert();
 
@@ -417,7 +426,6 @@ class OrbitControls extends EventDispatcher {
                     lastTargetPosition.copy( scope.target );
 
                     zoomChanged = false;
-
                     return true;
 
                 }
