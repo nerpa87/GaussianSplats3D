@@ -258,8 +258,9 @@ export class Viewer {
         this.mouseMoveListener = null;
         this.mouseDownListener = null;
         this.mouseUpListener = null;
-        this.possibleDownKeys = ["KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD", "KeyI", "KeyK", "KeyU", "KeyO"];
+        this.possibleDownKeys = ["KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD"];
         this.downKeys = {};
+        this.keyDownListerensEnabled = false;
         this.keyDownListener = null;
         this.keyUpListener = null;
 
@@ -434,6 +435,13 @@ export class Viewer {
             window.addEventListener('keydown', this.keyDownListener, false);
             this.keyUpListener = this.onKeyUp.bind(this);
             window.addEventListener('keyup', this.keyUpListener, false);
+
+            this.keyDownListerensEnabled = true;
+            const checkPressedKeys = () => {
+                this.handleMultipleKeyDownKeys();
+                if (this.keyDownListerensEnabled) requestAnimationFrame(checkPressedKeys);
+            };
+            checkPressedKeys();
         }
     }
 
@@ -450,6 +458,7 @@ export class Viewer {
             window.removeEventListener('keyup', this.keyUpListener);
             this.keyUpListener = null;
             this.downKeys = {};
+            this.keyDownListerensEnabled = false;
         }
     }
 
@@ -484,45 +493,14 @@ export class Viewer {
                 this.downKeys[e.code] = 1;
             }
 
-            const updateTargetFromCamera = () => {
-                let vec = new Vector3(0, 0, -1);
-                vec.applyQuaternion(this.camera.quaternion);
-                this.controls.target = vec.add(this.camera.position);
-            }
-
             forward.set(0, 0, -1);
             forward.transformDirection(this.camera.matrixWorld);
             tempRollMatrixLeft.makeRotationAxis(forward, Math.PI / 128);
             tempRollMatrixRight.makeRotationAxis(forward, -Math.PI / 128);
 
             let dp, target, vec;
-            const handleCode = code => {
-                switch (code) {
-                // move camera
-                case 'KeyW':
-                case 'KeyS':
-                    target = this.controls.target.clone();
-                    const direction = target.sub(this.camera.position).normalize();
-                    dp = direction.multiplyScalar(((code == 'KeyS') ? -1 : 1) * 0.01);
-                    this.camera.position.add(dp);
-                    updateTargetFromCamera();
-                    break;
-                case 'KeyA':
-                case 'KeyD':
-                    vec = new Vector3(1, 0, 0);
-                    vec.applyQuaternion(this.camera.quaternion);
-                    dp  = vec.multiplyScalar(((code == 'KeyA') ? -1 : 1) * 0.01);
-                    this.camera.position.add(dp);
-                    updateTargetFromCamera();
-                    break;
-                case 'KeyQ':
-                case 'KeyE':
-                    vec = new Vector3(0, 1, 0);
-                    vec.applyQuaternion(this.camera.quaternion);
-                    dp  = vec.multiplyScalar(((code == 'KeyE') ? -1 : 1) * 0.01);
-                    this.camera.position.add(dp);
-                    updateTargetFromCamera();
-                    break;
+            let code = e.code;
+            switch (code) {
                 // rotate camera
                 case 'KeyU':
                     if (e.shiftKey) { // old behavior
@@ -547,12 +525,12 @@ export class Viewer {
                         break;
                     }
                     this.camera.rotateOnAxis(new Vector3(1,0,0), ((code == 'KeyK') ? -1 : 1) *  Math.PI / 128);
-                    updateTargetFromCamera();
+                    this.updateTargetFromCamera();
                     break;
                 case 'KeyL':
                 case 'KeyJ':
                     this.camera.rotateOnAxis(new Vector3(0,1,0), ((code == 'KeyL') ? -1 : 1) *  Math.PI / 128);
-                    updateTargetFromCamera();
+                    this.updateTargetFromCamera();
                     break;
                 // ... reset
                 case 'KeyR':
@@ -590,19 +568,54 @@ export class Viewer {
                         this.splatMesh.setSplatScale(Math.max(this.splatMesh.getSplatScale() - 0.05, 0.0));
                     }
                 break;
-                }
             }
 
-            handleCode(e.code); // handling any keydown
-
-            for (let code of Object.keys(this.downKeys)) {
-                if (code != e.code) { // if there is a key from cobminations that was not handled yet
-                    handleCode(code);
-                }
-            }
         };
 
     }();
+
+    updateTargetFromCamera = function() {
+        let vec = new Vector3(0, 0, -1);
+        vec.applyQuaternion(this.camera.quaternion);
+        this.controls.target = vec.add(this.camera.position);
+    }
+
+    handleMultipleKeyDownKeys = function() {
+        let dp, target, vec;
+        const handleCode = code => {
+            switch (code) {
+                // move camera
+                case 'KeyW':
+                case 'KeyS':
+                    target = this.controls.target.clone();
+                    const direction = target.sub(this.camera.position).normalize();
+                    dp = direction.multiplyScalar(((code == 'KeyS') ? -1 : 1) * 0.005);
+                    this.camera.position.add(dp);
+                    this.updateTargetFromCamera();
+                    break;
+                case 'KeyA':
+                case 'KeyD':
+                    vec = new Vector3(1, 0, 0);
+                    vec.applyQuaternion(this.camera.quaternion);
+                    dp  = vec.multiplyScalar(((code == 'KeyA') ? -1 : 1) * 0.005);
+                    this.camera.position.add(dp);
+                    this.updateTargetFromCamera();
+                    break;
+                case 'KeyQ':
+                case 'KeyE':
+                    vec = new Vector3(0, 1, 0);
+                    vec.applyQuaternion(this.camera.quaternion);
+                    dp  = vec.multiplyScalar(((code == 'KeyE') ? -1 : 1) * 0.005);
+                    this.camera.position.add(dp);
+                    this.updateTargetFromCamera();
+                    break;
+            }
+        }
+
+        for (let code of Object.keys(this.downKeys)) {
+            handleCode(code);
+        }
+    }
 
     onMouseMove(mouse) {
         this.mousePosition.set(mouse.offsetX, mouse.offsetY);
