@@ -515,15 +515,6 @@ export class Viewer {
                     break;
                 case 'KeyI':
                 case 'KeyK':
-                    if (e.shiftKey && code == 'KeyI') { // old behavior
-                        this.showInfo = !this.showInfo;
-                        if (this.showInfo) {
-                            this.infoPanel.show();
-                        } else {
-                            this.infoPanel.hide();
-                        }
-                        break;
-                    }
                     this.camera.rotateOnAxis(new Vector3(1,0,0), ((code == 'KeyK') ? -1 : 1) *  Math.PI / 128);
                     this.updateTargetFromCamera();
                     break;
@@ -546,14 +537,21 @@ export class Viewer {
                     this.forceRenderNextFrame();
                 break;
                 case 'KeyC':
-                    this.showMeshCursor = !this.showMeshCursor;
+                    this.showInfo = !this.showInfo;
+                    if (this.showInfo) {
+                        this.infoPanel.show();
+                    } else {
+                        this.infoPanel.hide();
+                    }
+                    break;
+                    // this.showMeshCursor = !this.showMeshCursor;
                 break;
-                case 'KeyO':
+                case 'KeyZ':
                     if (!this.usingExternalCamera) {
                         this.setOrthographicMode(!this.camera.isOrthographicCamera);
                     }
                 break;
-                case 'KeyP':
+                case 'KeyX':
                     if (!this.usingExternalCamera) {
                         this.splatMesh.setPointCloudModeEnabled(!this.splatMesh.getPointCloudModeEnabled());
                     }
