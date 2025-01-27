@@ -408,8 +408,8 @@ export class Viewer {
                 if (controls) {
                     controls.listenToKeyEvents(window);
                     controls.rotateSpeed = 0.5;
-                    controls.maxPolarAngle = Math.PI * .75;
-                    controls.minPolarAngle = 0.1;
+                    // controls.maxPolarAngle = Math.PI * .75;
+                    // controls.minPolarAngle = 0.1;
                     controls.enableDamping = true;
                     controls.dampingFactor = 0.05;
                     controls.target.copy(this.initialCameraLookAt);
@@ -486,6 +486,8 @@ export class Viewer {
         const forward = new THREE.Vector3();
         const tempRollMatrixLeft = new THREE.Matrix4();
         const tempRollMatrixRight = new THREE.Matrix4();
+        const tempPitchMatrixTop = new THREE.Matrix4();
+        const tempPitchMatrixBottom = new THREE.Matrix4();
 
         return function(e) {
 
@@ -497,6 +499,10 @@ export class Viewer {
             forward.transformDirection(this.camera.matrixWorld);
             tempRollMatrixLeft.makeRotationAxis(forward, Math.PI / 128);
             tempRollMatrixRight.makeRotationAxis(forward, -Math.PI / 128);
+            forward.set(1, 0, 0);
+            forward.transformDirection(this.camera.matrixWorld);
+            tempPitchMatrixTop.makeRotationAxis(forward, Math.PI / 128);
+            tempPitchMatrixBottom.makeRotationAxis(forward, -Math.PI / 128);
 
             let dp, target, vec;
             let code = e.code;
@@ -515,6 +521,7 @@ export class Viewer {
                     break;
                 case 'KeyI':
                 case 'KeyK':
+                    this.camera.up.transformDirection((code == 'KeyK') ? tempPitchMatrixBottom : tempPitchMatrixTop);
                     this.camera.rotateOnAxis(new Vector3(1,0,0), ((code == 'KeyK') ? -1 : 1) *  Math.PI / 128);
                     this.updateTargetFromCamera();
                     break;

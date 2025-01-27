@@ -65,8 +65,8 @@ class OrbitControls extends EventDispatcher {
 
         // How far you can orbit vertically, upper and lower limits.
         // Range is 0 to Math.PI radians.
-        this.minPolarAngle = 0; // radians
-        this.maxPolarAngle = Math.PI; // radians
+        this.minPolarAngle = - Infinity; // radians
+        this.maxPolarAngle = Infinity; // radians
 
         // How far you can orbit horizontally, upper and lower limits.
         // If set, the interval [min, max] must be a sub-interval of [- 2 PI, 2 PI], with ( max - min < 2 PI )
@@ -211,8 +211,6 @@ class OrbitControls extends EventDispatcher {
             const twoPI = 2 * Math.PI;
 
             return function update() {
-                const prevSpherical = spherical.clone();
-
                 quat.setFromUnitVectors( object.up, new Vector3( 0, 1, 0 ) );
                 quatInverse.copy(quat).invert();
 
@@ -271,9 +269,7 @@ class OrbitControls extends EventDispatcher {
 
                 // restrict phi to be between desired limits
                 spherical.phi = Math.max( scope.minPolarAngle, Math.min( scope.maxPolarAngle, spherical.phi ) );
-
                 spherical.makeSafe();
-
 
                 // move target to panned location
 
@@ -286,7 +282,6 @@ class OrbitControls extends EventDispatcher {
                     scope.target.add( panOffset );
 
                 }
-
                 // adjust the camera position based on zoom only if we're not zooming to the cursor or if it's an ortho camera
                 // we adjust zoom later in these cases
                 if ( scope.zoomToCursor && performCursorZoom || scope.object.isOrthographicCamera ) {
@@ -298,7 +293,6 @@ class OrbitControls extends EventDispatcher {
                     spherical.radius = clampDistance( spherical.radius * scale );
 
                 }
-
 
                 offset.setFromSpherical( spherical );
 
