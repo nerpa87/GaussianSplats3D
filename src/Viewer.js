@@ -259,11 +259,11 @@ export class Viewer {
         this.mouseDownListener = null;
         this.mouseUpListener = null;
 
-        this.possibleDownKeys = ["KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD"];
+        this.possibleDownKeys = ["KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD", "KeyI", "KeyK", "KeyU", "KeyO", "KeyL", "KeyJ"];
         this.currentKeyDownMoveSpeeds = this.possibleDownKeys.reduce((acc, k) => {acc[k] = 0; return acc}, {});
         this.currentKeyDownMoveStep = 1;
         this.keyDownMoveAcceleration = 0.25;
-        this.keyDownMoveFriction = 0.075;
+        this.keyDownMoveFriction = 0.15;
         this.keyDownMaxSpeed = 7;
         this.downKeys = {};
 
@@ -498,7 +498,7 @@ export class Viewer {
 
         return function(e) {
 
-            if (this.possibleDownKeys.includes(e.code)) {
+            if ((!e.shiftKey) && this.possibleDownKeys.includes(e.code)) {
                 this.downKeys[e.code] = 1;
             }
 
@@ -514,28 +514,11 @@ export class Viewer {
             let dp, target, vec;
             let code = e.code;
             switch (code) {
-                // rotate camera
                 case 'KeyU':
                     if (e.shiftKey) { // old behavior
                         this.showControlPlane = !this.showControlPlane;
                         break;
                     }
-                    // because controls are connected with camera.up vector, not camera matrix, we can't apply camera's z rotation
-                    this.camera.up.transformDirection(tempRollMatrixRight);
-                    break;
-                case 'KeyO':
-                    this.camera.up.transformDirection(tempRollMatrixLeft);
-                    break;
-                case 'KeyI':
-                case 'KeyK':
-                    this.camera.up.transformDirection((code == 'KeyK') ? tempPitchMatrixBottom : tempPitchMatrixTop);
-                    this.camera.rotateOnAxis(new Vector3(1,0,0), ((code == 'KeyK') ? -1 : 1) *  Math.PI / 128);
-                    this.updateTargetFromCamera();
-                    break;
-                case 'KeyL':
-                case 'KeyJ':
-                    this.camera.rotateOnAxis(new Vector3(0,1,0), ((code == 'KeyL') ? -1 : 1) *  Math.PI / 128);
-                    this.updateTargetFromCamera();
                     break;
                 // ... reset
                 case 'KeyR':
@@ -610,9 +593,27 @@ export class Viewer {
 
     handleMultipleKeyDownKeys = function() {
         let dp, target, vec;
+
+        const forward = new THREE.Vector3();
+        const tempRollMatrixLeft = new THREE.Matrix4();
+        const tempRollMatrixRight = new THREE.Matrix4();
+        const tempPitchMatrixTop = new THREE.Matrix4();
+        const tempPitchMatrixBottom = new THREE.Matrix4();
+
         // let step = this.currentKeyDownMoveStep * 0.01;
         const handleCode = code => {
             let step = this.currentKeyDownMoveSpeeds[code] * 0.005;
+            let rstep = this.currentKeyDownMoveSpeeds[code] * Math.PI / 1280;
+
+            forward.set(0, 0, -1);
+            forward.transformDirection(this.camera.matrixWorld);
+            tempRollMatrixLeft.makeRotationAxis(forward, rstep);
+            tempRollMatrixRight.makeRotationAxis(forward, -rstep);
+            forward.set(1, 0, 0);
+            forward.transformDirection(this.camera.matrixWorld);
+            tempPitchMatrixTop.makeRotationAxis(forward, rstep);
+            tempPitchMatrixBottom.makeRotationAxis(forward, -rstep);
+
             switch (code) {
                 // move camera
                 case 'KeyW':
@@ -637,6 +638,25 @@ export class Viewer {
                     vec.applyQuaternion(this.camera.quaternion);
                     dp  = vec.multiplyScalar(((code == 'KeyE') ? -1 : 1) * step);
                     this.camera.position.add(dp);
+                    this.updateTargetFromCamera();
+                    break;
+                // rotate camera
+                case 'KeyI':
+                case 'KeyK':
+                    this.camera.up.transformDirection((code == 'KeyK') ? tempPitchMatrixBottom : tempPitchMatrixTop);
+                    this.camera.rotateOnAxis(new Vector3(1,0,0), ((code == 'KeyK') ? -1 : 1) *  rstep);
+                    this.updateTargetFromCamera();
+                    break;
+                case 'KeyU':
+                    // because controls are connected with camera.up vector, not camera matrix, we can't apply camera's z rotation
+                    this.camera.up.transformDirection(tempRollMatrixRight);
+                    break;
+                case 'KeyO':
+                    this.camera.up.transformDirection(tempRollMatrixLeft);
+                    break;
+                case 'KeyL':
+                case 'KeyJ':
+                    this.camera.rotateOnAxis(new Vector3(0,1,0), ((code == 'KeyL') ? -1 : 1) * rstep);
                     this.updateTargetFromCamera();
                     break;
             }
