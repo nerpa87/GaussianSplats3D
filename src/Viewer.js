@@ -258,9 +258,15 @@ export class Viewer {
         this.mouseMoveListener = null;
         this.mouseDownListener = null;
         this.mouseUpListener = null;
+
         this.possibleDownKeys = ["KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD"];
-        this.moveStepScale = 1;
+        this.currentKeyDownMoveSpeeds = this.possibleDownKeys.reduce((acc, k) => {acc[k] = 0; return acc}, {});
+        this.currentKeyDownMoveStep = 1;
+        this.keyDownMoveAcceleration = 0.25;
+        this.keyDownMoveFriction = 0.075;
+        this.keyDownMaxSpeed = 7;
         this.downKeys = {};
+
         this.keyDownListerensEnabled = false;
         this.keyDownListener = null;
         this.keyUpListener = null;
@@ -589,11 +595,11 @@ export class Viewer {
     }();
 
     increaseMoveStep = function() {
-        this.moveStepScale *= 1.33;
+        this.currentKeyDownMoveStep *= 1.33;
     }
 
     decreaseMoveStep = function() {
-        this.moveStepScale *= 0.75;
+        this.currentKeyDownMoveStep *= 0.75;
     }
 
     updateTargetFromCamera = function() {
@@ -604,8 +610,9 @@ export class Viewer {
 
     handleMultipleKeyDownKeys = function() {
         let dp, target, vec;
-        let step = this.moveStepScale * 0.01;
+        // let step = this.currentKeyDownMoveStep * 0.01;
         const handleCode = code => {
+            let step = this.currentKeyDownMoveSpeeds[code] * 0.005;
             switch (code) {
                 // move camera
                 case 'KeyW':
@@ -634,10 +641,30 @@ export class Viewer {
                     break;
             }
         }
-
-        for (let code of Object.keys(this.downKeys)) {
-            handleCode(code);
+        for (let [code, speed] of Object.entries(this.currentKeyDownMoveSpeeds)) {
+            if (speed > 0) 
+                handleCode(code);
         }
+
+        // increase speed of down keys and decrease speed of not down keys
+        for (let code of this.possibleDownKeys) {
+            if (this.downKeys[code]) {
+                // increase speed
+                if (this.currentKeyDownMoveSpeeds[code] == 0)
+                    this.currentKeyDownMoveSpeeds[code] = this.currentKeyDownMoveStep;
+                else
+                    this.currentKeyDownMoveSpeeds[code] = Math.min(
+                        this.currentKeyDownMoveSpeeds[code] + this.currentKeyDownMoveStep * this.keyDownMoveAcceleration, 
+                        this.currentKeyDownMoveStep * this.keyDownMaxSpeed);
+
+            } else {
+                // decrease speed (friction) for not pressed keys
+                this.currentKeyDownMoveSpeeds[code] = Math.max(
+                        this.currentKeyDownMoveSpeeds[code] - Math.max(1, this.currentKeyDownMoveStep) * this.keyDownMoveFriction, 0);
+            }
+
+        }
+
     }
 
     onMouseMove(mouse) {
