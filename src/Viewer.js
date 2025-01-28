@@ -259,6 +259,7 @@ export class Viewer {
         this.mouseDownListener = null;
         this.mouseUpListener = null;
         this.possibleDownKeys = ["KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD"];
+        this.moveStepScale = 1;
         this.downKeys = {};
         this.keyDownListerensEnabled = false;
         this.keyDownListener = null;
@@ -564,11 +565,19 @@ export class Viewer {
                     }
                 break;
                 case 'Equal':
+                    if (e.shiftKey) { 
+                        this.increaseMoveStep();
+                        break;
+                    }
                     if (!this.usingExternalCamera) {
                         this.splatMesh.setSplatScale(this.splatMesh.getSplatScale() + 0.05);
                     }
                 break;
                 case 'Minus':
+                    if (e.shiftKey) { 
+                        this.decreaseMoveStep();
+                        break;
+                    }
                     if (!this.usingExternalCamera) {
                         this.splatMesh.setSplatScale(Math.max(this.splatMesh.getSplatScale() - 0.05, 0.0));
                     }
@@ -579,6 +588,14 @@ export class Viewer {
 
     }();
 
+    increaseMoveStep = function() {
+        this.moveStepScale *= 1.33;
+    }
+
+    decreaseMoveStep = function() {
+        this.moveStepScale *= 0.75;
+    }
+
     updateTargetFromCamera = function() {
         let vec = new Vector3(0, 0, -1);
         vec.applyQuaternion(this.camera.quaternion);
@@ -587,6 +604,7 @@ export class Viewer {
 
     handleMultipleKeyDownKeys = function() {
         let dp, target, vec;
+        let step = this.moveStepScale * 0.01;
         const handleCode = code => {
             switch (code) {
                 // move camera
@@ -594,7 +612,7 @@ export class Viewer {
                 case 'KeyS':
                     target = this.controls.target.clone();
                     const direction = target.sub(this.camera.position).normalize();
-                    dp = direction.multiplyScalar(((code == 'KeyS') ? -1 : 1) * 0.005);
+                    dp = direction.multiplyScalar(((code == 'KeyS') ? -1 : 1) * step);
                     this.camera.position.add(dp);
                     this.updateTargetFromCamera();
                     break;
@@ -602,7 +620,7 @@ export class Viewer {
                 case 'KeyD':
                     vec = new Vector3(1, 0, 0);
                     vec.applyQuaternion(this.camera.quaternion);
-                    dp  = vec.multiplyScalar(((code == 'KeyA') ? -1 : 1) * 0.005);
+                    dp  = vec.multiplyScalar(((code == 'KeyA') ? -1 : 1) * step);
                     this.camera.position.add(dp);
                     this.updateTargetFromCamera();
                     break;
@@ -610,7 +628,7 @@ export class Viewer {
                 case 'KeyE':
                     vec = new Vector3(0, 1, 0);
                     vec.applyQuaternion(this.camera.quaternion);
-                    dp  = vec.multiplyScalar(((code == 'KeyE') ? -1 : 1) * 0.005);
+                    dp  = vec.multiplyScalar(((code == 'KeyE') ? -1 : 1) * step);
                     this.camera.position.add(dp);
                     this.updateTargetFromCamera();
                     break;
