@@ -522,6 +522,7 @@ export class Viewer {
                     break;
                 // ... reset
                 case 'KeyR':
+                    Object.keys(this.currentKeyDownMoveSpeeds).forEach(k => this.currentKeyDownMoveSpeeds[k] = 0)
                     this.controls.reset();
                     break;
                 // ...
