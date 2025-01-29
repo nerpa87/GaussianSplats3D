@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { Vector3 } from 'three';
+import { Vector3 } from 'three'
+import { Group, Easing, Tween } from '@tweenjs/tween.js';
 import { OrbitControls } from './OrbitControls.js';
 import { PlyLoader } from './loaders/ply/PlyLoader.js';
 import { SplatLoader } from './loaders/splat/SplatLoader.js';
@@ -259,6 +260,8 @@ export class Viewer {
         this.mouseDownListener = null;
         this.mouseUpListener = null;
 
+        this.cameraPoses = {}; // poses to animate
+
         this.possibleDownKeys = ["KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD", "KeyI", "KeyK", "KeyU", "KeyO", "KeyL", "KeyJ"];
         this.currentKeyDownMoveSpeeds = this.possibleDownKeys.reduce((acc, k) => {acc[k] = 0; return acc}, {});
         this.currentKeyDownMoveStep = 1;
@@ -482,6 +485,76 @@ export class Viewer {
         this.onSplatMeshChangedCallback = callback;
     }
 
+    stopInertia = function() {
+        Object.keys(this.currentKeyDownMoveSpeeds).forEach(k => this.currentKeyDownMoveSpeeds[k] = 0);
+    }
+
+    _getCameraPose = function() {
+        return {
+            'up': this.camera.up.clone(),
+            'position': this.camera.position.clone(),
+            'target': this.controls.target.clone()
+        }
+    }
+
+    addCameraPose = function(number) {
+        this.cameraPoses[number] = this._getCameraPose();
+    }
+
+    playCameraPoses = function() {
+        const TOTAL_TIME = 20000; // 20s for whole animation
+        const poses = Object.keys(this.cameraPoses).sort((x, y) => parseInt(x) - parseInt(y)).map(k => this.cameraPoses[k]);
+        if (poses.length === 0)
+            return;
+        this.stopInertia();
+
+        const flatten = ({up, position, target}) => ({
+            'px': position.x,
+            'py': position.y,
+            'pz': position.z,
+            'ux': up.x,
+            'uy': up.y,
+            'uz': up.z,
+            'tx': target.x,
+            'ty': target.y,
+            'tz': target.z,
+        });
+        const onTweenUpdate = obj => {
+            this.camera.up.copy({x: obj['ux'], y: obj['uy'], z: obj['uz']});
+            this.camera.position.copy({x: obj['px'], y: obj['py'], z: obj['pz']});
+            this.controls.target.copy({x: obj['tx'], y: obj['ty'], z: obj['tz']});
+        };
+
+        const curPose = flatten(this._getCameraPose());
+        const nextPose = flatten(poses[0]);
+
+        let tween = new Tween(curPose).to(nextPose, 500);
+        tween.onUpdate(onTweenUpdate)
+        tween.start();
+
+        const allTweens = [tween];
+        const delay = (poses.length > 1) ? TOTAL_TIME/(poses.length - 1) : 0;
+        poses.forEach((pose, i) => {
+            if (i === 0)
+                return;
+            const tw = new Tween(curPose).to(flatten(poses[i]), delay); // .easing(Easing.Elastic.InOut)
+            tw.onUpdate(onTweenUpdate);
+            tween = tween.chain(tw);
+            allTweens.push(tw);
+            tween = tw;
+        });
+
+        const group = new Group(...allTweens);
+
+        animate(performance.now())
+
+        function animate(time) {
+            group.update(time)
+            const keepGoing = !group.allStopped()
+            if (keepGoing) requestAnimationFrame(animate)
+        }
+    }
+
     onKeyUp = function(e) {
         if (this.possibleDownKeys.includes(e.code)) {
             delete this.downKeys[e.code];
@@ -513,6 +586,16 @@ export class Viewer {
 
             let dp, target, vec;
             let code = e.code;
+            // console.log('code', code)
+            if (e.shiftKey && code.indexOf('Digit') === 0) {
+                this.addCameraPose(parseInt(code.replace('Digit', '')));
+                return;
+            }
+            if (code === 'Space') {
+                this.playCameraPoses();
+                return;
+            }
+
             switch (code) {
                 case 'KeyU':
                     if (e.shiftKey) { // old behavior
@@ -522,7 +605,7 @@ export class Viewer {
                     break;
                 // ... reset
                 case 'KeyR':
-                    Object.keys(this.currentKeyDownMoveSpeeds).forEach(k => this.currentKeyDownMoveSpeeds[k] = 0)
+                    this.stopInertia();
                     this.controls.reset();
                     break;
                 // ...
