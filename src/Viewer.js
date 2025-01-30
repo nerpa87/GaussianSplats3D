@@ -261,7 +261,7 @@ export class Viewer {
         this.mouseUpListener = null;
 
         this.cameraPoses = {}; // poses to animate
-
+        this.cameraPosesIAOrder = []; // poses intercation order to apply delete function
         this.possibleDownKeys = ["KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD", "KeyI", "KeyK", "KeyU", "KeyO", "KeyL", "KeyJ"];
         this.currentKeyDownMoveSpeeds = this.possibleDownKeys.reduce((acc, k) => {acc[k] = 0; return acc}, {});
         this.currentKeyDownMoveStep = 1;
@@ -499,11 +499,33 @@ export class Viewer {
 
     addCameraPose = function(number) {
         this.cameraPoses[number] = this._getCameraPose();
+        this.cameraPosesIAOrder.unshift(number);
+    }
+
+    goToCameraPose = function(number) {
+        const pose = this.cameraPoses[number];
+        if (pose !== undefined) {
+            this.cameraPosesIAOrder.sort((a, b) => (a === number) ? -1 : 1);
+            this._playCameraPoses([pose]);
+        }
+    }
+
+    deleteCameraPose = function() {
+        if (this.cameraPosesIAOrder.length === 0)
+            return;
+        const poseNumber = this.cameraPosesIAOrder.shift();
+        delete this.cameraPoses[poseNumber];
+        if (this.cameraPosesIAOrder.length > 0)
+            this.goToCameraPose(this.cameraPosesIAOrder[0]);
     }
 
     playCameraPoses = function() {
-        const TOTAL_TIME = 20000; // 20s for whole animation
         const poses = Object.keys(this.cameraPoses).sort((x, y) => parseInt(x) - parseInt(y)).map(k => this.cameraPoses[k]);
+        this._playCameraPoses(poses);
+    }
+
+    _playCameraPoses = function(poses) {
+        const TOTAL_TIME = 20000; // 20s for whole animation
         if (poses.length === 0)
             return;
         this.stopInertia();
@@ -591,8 +613,16 @@ export class Viewer {
                 this.addCameraPose(parseInt(code.replace('Digit', '')));
                 return;
             }
+            if (code.indexOf('Digit') === 0) {
+                this.goToCameraPose(parseInt(code.replace('Digit', '')));
+                return;
+            }
             if (code === 'Space') {
                 this.playCameraPoses();
+                return;
+            }
+            if (code === 'Delete') {
+                this.deleteCameraPose();
                 return;
             }
 
