@@ -350,10 +350,13 @@ export class Viewer {
             this.perspectiveCamera = new THREE.PerspectiveCamera(THREE_CAMERA_FOV, renderDimensions.x / renderDimensions.y, 0.1, 1000);
             this.orthographicCamera = new THREE.OrthographicCamera(renderDimensions.x / -2, renderDimensions.x / 2,
                                                                    renderDimensions.y / 2, renderDimensions.y / -2, 0.1, 1000 );
+            for (let camera of [this.perspectiveCamera, this.orthographicCamera]) {
+                camera.position.copy(this.initialCameraPosition);
+                camera.up.copy(this.cameraUp).normalize();
+                camera.lookAt(this.initialCameraLookAt);
+            }
             this.camera = this.startInOrthographicMode ? this.orthographicCamera : this.perspectiveCamera;
-            this.camera.position.copy(this.initialCameraPosition);
-            this.camera.up.copy(this.cameraUp).normalize();
-            this.camera.lookAt(this.initialCameraLookAt);
+
         }
     }
 
