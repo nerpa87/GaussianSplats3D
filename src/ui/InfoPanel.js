@@ -5,6 +5,7 @@ export class InfoPanel {
         this.container = container || document.body;
 
         this.infoCells = {};
+        this.NAV_INFO = 'Motion - QWEASD, camera rotation - UIOJKL, C  - toggle ortho mode, X - point cloud mode';
 
         const layout = [
             ['Camera position', 'cameraPosition'],
@@ -18,7 +19,9 @@ export class InfoPanel {
             ['Render window', 'renderWindow'],
             ['Focal adjustment', 'focalAdjustment'],
             ['Splat scale', 'splatScale'],
-            ['Point cloud mode', 'pointCloudMode']
+            ['Point cloud mode', 'pointCloudMode'],
+            ['', ''],
+            ['Nagivation hotkeys', 'navInfo'],
         ];
 
         this.infoPanelContainer = document.createElement('div');
@@ -70,7 +73,7 @@ export class InfoPanel {
 
             const labelCell = document.createElement('div');
             labelCell.style.display = 'table-cell';
-            labelCell.innerHTML = `${layoutEntry[0]}: `;
+            labelCell.innerHTML = (layoutEntry[0]) ? `${layoutEntry[0]}: ` : '&nbsp;';
             labelCell.classList.add('info-panel-cell', 'label-cell');
 
             const spacerCell = document.createElement('div');
@@ -143,6 +146,7 @@ export class InfoPanel {
         this.infoCells.focalAdjustment.innerHTML = `${focalAdjustment.toFixed(3)}`;
         this.infoCells.splatScale.innerHTML = `${splatScale.toFixed(3)}`;
         this.infoCells.pointCloudMode.innerHTML = `${pointCloudMode}`;
+        this.infoCells.navInfo.innerHTML = this.NAV_INFO;
     };
 
     setContainer(container) {
