@@ -651,7 +651,7 @@ export class Viewer {
                     this.focalAdjustment -= 0.02;
                     this.forceRenderNextFrame();
                 break;
-                case 'KeyC':
+                case 'KeyZ':
                     this.showInfo = !this.showInfo;
                     if (this.showInfo) {
                         this.infoPanel.show();
@@ -661,7 +661,7 @@ export class Viewer {
                     break;
                     // this.showMeshCursor = !this.showMeshCursor;
                 break;
-                case 'KeyZ':
+                case 'KeyC':
                     if (!this.usingExternalCamera) {
                         this.setOrthographicMode(!this.camera.isOrthographicCamera);
                     }
