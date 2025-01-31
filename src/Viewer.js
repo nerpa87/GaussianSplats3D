@@ -569,14 +569,27 @@ export class Viewer {
             tween = tw;
         });
 
-        const group = new Group(...allTweens);
+        let group = new Group(...allTweens);
+        const stopTweenOnKeyDown = (e) => {
+            if (this.possibleDownKeys.includes(e.code) ||
+                (e.code.indexOf('Arrow') === 0) || 
+                (e.code.indexOf('Digit') === 0) || 
+                (e.code === 'Space'))
+                group && group.getAll().forEach(item => item.stop());
+        }
+        window.addEventListener('keydown', stopTweenOnKeyDown, false);
 
         animate(performance.now())
 
         function animate(time) {
             group.update(time)
             const keepGoing = !group.allStopped()
-            if (keepGoing) requestAnimationFrame(animate)
+            if (keepGoing) {
+                requestAnimationFrame(animate)
+            } else {
+                group = null
+                window.removeEventListener('keydown', stopTweenOnKeyDown)
+            }
         }
     }
 
