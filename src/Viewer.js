@@ -640,6 +640,7 @@ export class Viewer {
                 case 'KeyR':
                     this.stopInertia();
                     this.controls.reset();
+
                     break;
                 // ...
                 case 'KeyG':
@@ -719,8 +720,10 @@ export class Viewer {
 
         // let step = this.currentKeyDownMoveStep * 0.01;
         const handleCode = code => {
-            let step = this.currentKeyDownMoveSpeeds[code] * 0.005;
-            let rstep = this.currentKeyDownMoveSpeeds[code] * Math.PI / 1280;
+            let speed = this.currentKeyDownMoveSpeeds[code];
+            let step = speed * 0.005;
+            let rStepCoeff = (this.camera.isOrthographicCamera) ? 0.1 : 1;
+            let rstep = speed * Math.PI / 1280 * rStepCoeff;
 
             forward.set(0, 0, -1);
             forward.transformDirection(this.camera.matrixWorld);
@@ -734,12 +737,18 @@ export class Viewer {
             switch (code) {
                 // move camera
                 case 'KeyW':
-                case 'KeyS':
-                    target = this.controls.target.clone();
-                    const direction = target.sub(this.camera.position).normalize();
-                    dp = direction.multiplyScalar(((code == 'KeyS') ? -1 : 1) * step);
-                    this.camera.position.add(dp);
-                    this.updateTargetFromCamera();
+                case 'KeyS': 
+                    if (this.camera.isOrthographicCamera) {
+                        let pow = Math.log(1 + speed)/Math.log(2);
+                        this.camera.zoom *= (code == 'KeyS') ? Math.pow(.99, pow) : Math.pow(1.01, pow);
+                        this.camera.updateProjectionMatrix();
+                    } else {
+                        target = this.controls.target.clone();
+                        const direction = target.sub(this.camera.position).normalize();
+                        dp = direction.multiplyScalar(((code == 'KeyS') ? -1 : 1) * step);
+                        this.camera.position.add(dp);
+                        this.updateTargetFromCamera();
+                    }
                     break;
                 case 'KeyA':
                 case 'KeyD':
@@ -1899,9 +1908,10 @@ export class Viewer {
 
         if (this.controls && this.controls.enabled) {
             this.controls.update();
-            if (this.camera.isOrthographicCamera && !this.usingExternalCamera) {
-                Viewer.setCameraPositionFromZoom(this.camera, this.camera, this.controls);
-            }
+            // it affects somehow orthographic projection in case of zoom and then tilt camera, disabling
+            // if (this.camera.isOrthographicCamera && !this.usingExternalCamera) {
+            //     Viewer.setCameraPositionFromZoom(this.camera, this.camera, this.controls);
+            // }
         }
         this.runSplatSort();
         this.updateForRendererSizeChanges();

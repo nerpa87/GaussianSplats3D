@@ -113,6 +113,7 @@ class OrbitControls extends EventDispatcher {
         this.position0 = this.object.position.clone();
         this.up0 = this.object.up.clone();
         this.zoom0 = this.object.zoom;
+        this.quaternion0 = this.object.quaternion.clone();
 
         // the target DOM element for key events
         this._domElementKeyEvents = null;
@@ -166,18 +167,21 @@ class OrbitControls extends EventDispatcher {
             this.position0 = this.object.position.clone();
             this.up0 = this.object.up.clone();
             this.zoom0 = this.object.zoom;
+            this.quaternion0 = this.object.quaternion.clone();
         }
 
         this.reset = function() {
 
             scope.target.copy( scope.target0 );
             scope.object.position.copy( scope.position0 );
+            scope.object.quaternion.copy( scope.quaternion0 );
             scope.object.zoom = scope.zoom0;
             scope.object.up.copy( scope.up0 );
             this.clearDampedRotation();
             this.clearDampedPan();
 
             scope.object.updateProjectionMatrix();
+            scope.object.updateMatrix();
             scope.dispatchEvent( _changeEvent );
 
             scope.update();
