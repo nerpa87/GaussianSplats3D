@@ -527,6 +527,33 @@ export class Viewer {
         this._playCameraPoses(poses);
     }
 
+    _interpolatePoses = function(poses, steps) {
+        const curvePosition = new THREE.CatmullRomCurve3(poses.map(pose => pose.position), false);
+        const curveNormal = new THREE.CatmullRomCurve3(poses.map(pose => pose.up), false);
+        const curveTarget = new THREE.CatmullRomCurve3(poses.map(pose => pose.target), false);
+
+        const curves = [curvePosition, curveNormal, curveTarget];
+
+        const outPoses = [];
+        for (let i = 0; i <= steps; i++) {
+            let t = i / steps;
+            let vecs = []
+            for (let curve of curves) {
+                let point = curve.getPoint(t);
+                let vec = new Vector3(point.x, point.y, point.z);
+                vecs.push(vec);
+            }
+            let pose = {
+                'position': vecs[0],
+                'up': vecs[1],
+                'target': vecs[2]
+            }
+            outPoses.push(pose);
+        }
+        return outPoses;
+
+    } 
+
     _playCameraPoses = function(poses) {
         const TOTAL_TIME = 20000; // 20s for whole animation
         if (poses.length === 0)
@@ -558,6 +585,7 @@ export class Viewer {
         tween.start();
 
         const allTweens = [tween];
+        poses = this._interpolatePoses(poses, 50);
         const delay = (poses.length > 1) ? TOTAL_TIME/(poses.length - 1) : 0;
         poses.forEach((pose, i) => {
             if (i === 0)
