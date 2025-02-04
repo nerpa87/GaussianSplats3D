@@ -585,7 +585,8 @@ export class Viewer {
         tween.start();
 
         const allTweens = [tween];
-        poses = this._interpolatePoses(poses, 50);
+        if (poses.length > 1)
+            poses = this._interpolatePoses(poses, 50);
         const delay = (poses.length > 1) ? TOTAL_TIME/(poses.length - 1) : 0;
         poses.forEach((pose, i) => {
             if (i === 0)
