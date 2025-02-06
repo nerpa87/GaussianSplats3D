@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Vector3 } from 'three'
+import { Vector3 } from 'three';
 import { Group, Easing, Tween } from '@tweenjs/tween.js';
 import { OrbitControls } from './OrbitControls.js';
 import { PlyLoader } from './loaders/ply/PlyLoader.js';
@@ -527,14 +527,14 @@ export class Viewer {
         this._playCameraPoses(poses);
     }
 
-    _interpolatePoses = function(poses, steps) {
+    _interpolatePoses = function(poses, steps, delay) {
         const curvePosition = new THREE.CatmullRomCurve3(poses.map(pose => pose.position), false);
         const curveNormal = new THREE.CatmullRomCurve3(poses.map(pose => pose.up), false);
         const curveTarget = new THREE.CatmullRomCurve3(poses.map(pose => pose.target), false);
-
         const curves = [curvePosition, curveNormal, curveTarget];
-
         const outPoses = [];
+
+        const middlePoints = [];
         for (let i = 0; i <= steps; i++) {
             let t = i / steps;
             let vecs = []
@@ -547,11 +547,27 @@ export class Viewer {
                 'position': vecs[0],
                 'up': vecs[1],
                 'target': vecs[2]
+            
             }
+            const middlePoint = vecs[0].clone().multiplyScalar(0.34).add(vecs[2].clone().multiplyScalar(0.66));
+            // const middlePoint = vecs[0].clone().add(vecs[2]).multiplyScalar(0.5);
+            middlePoints.push(middlePoint);
+
             outPoses.push(pose);
         }
-        return outPoses;
 
+        let currentMiddlePoint = middlePoints[0].clone();
+        const distances = [];
+        let totalDistance = 0;
+        for (let i = 1; i <= steps; i++) {
+            let dist = currentMiddlePoint.sub(middlePoints[i]).length();
+            distances.push(dist);
+            totalDistance += dist;
+            currentMiddlePoint = middlePoints[i].clone();
+        }
+
+        const delays = distances.map(el => delay * el / totalDistance);
+        return [outPoses, delays];
     } 
 
     _playCameraPoses = function(poses) {
@@ -585,13 +601,12 @@ export class Viewer {
         tween.start();
 
         const allTweens = [tween];
-        if (poses.length > 1)
-            poses = this._interpolatePoses(poses, 50);
-        const delay = (poses.length > 1) ? TOTAL_TIME/(poses.length - 1) : 0;
-        poses.forEach((pose, i) => {
+        const [iposes, delays] = (poses.length > 1) ? this._interpolatePoses(poses, 100, TOTAL_TIME) : [poses, TOTAL_TIME];
+
+        iposes.forEach((pose, i) => {
             if (i === 0)
                 return;
-            const tw = new Tween(curPose).to(flatten(poses[i]), delay); // .easing(Easing.Elastic.InOut)
+            const tw = new Tween(curPose).to(flatten(iposes[i]), delays[i - 1]); // .easing(Easing.Elastic.InOut)
             tw.onUpdate(onTweenUpdate);
             tween = tween.chain(tw);
             allTweens.push(tw);
