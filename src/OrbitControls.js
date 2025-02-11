@@ -767,6 +767,10 @@ class OrbitControls extends EventDispatcher {
 
             let needsUpdate = false;
 
+            if (!event.shiftKey) { // handling arrow keys inside viewer now
+                return;
+            }
+
             switch ( event.code ) {
 
                 case scope.keys.UP:

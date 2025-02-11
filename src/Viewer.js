@@ -262,7 +262,11 @@ export class Viewer {
 
         this.cameraPoses = {}; // poses to animate
         this.cameraPosesIAOrder = []; // poses intercation order to apply delete function
-        this.possibleDownKeys = ["KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD", "KeyI", "KeyK", "KeyU", "KeyO", "KeyL", "KeyJ"];
+        this.possibleDownKeys = [
+            "KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD", "KeyI", "KeyK", "KeyU", "KeyO", "KeyL", "KeyJ",
+            'ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown',
+            "PageUp", "PageDown", "Comma", "Period"
+            ];
         this.currentKeyDownMoveSpeeds = this.possibleDownKeys.reduce((acc, k) => {acc[k] = 0; return acc}, {});
         this.currentKeyDownMoveStep = 1;
         this.keyDownMoveAcceleration = 0.25;
@@ -694,13 +698,11 @@ export class Viewer {
                 this.deleteCameraPose();
                 return;
             }
+            console.log('code', code, "e", e);
 
             switch (code) {
-                case 'KeyU':
-                    if (e.shiftKey) { // old behavior
-                        this.showControlPlane = !this.showControlPlane;
-                        break;
-                    }
+                case 'KeyV':
+                    this.showControlPlane = !this.showControlPlane;
                     break;
                 // ... reset
                 case 'KeyR':
@@ -733,6 +735,7 @@ export class Viewer {
                     }
                 break;
                 case 'KeyX':
+                case 'KeyP':
                     if (!this.usingExternalCamera) {
                         this.splatMesh.setPointCloudModeEnabled(!this.splatMesh.getPointCloudModeEnabled());
                     }
@@ -803,32 +806,38 @@ export class Viewer {
             switch (code) {
                 // move camera
                 case 'KeyW':
+                case 'ArrowUp':
                 case 'KeyS': 
+                case 'ArrowDown':
                     if (this.camera.isOrthographicCamera) {
                         let pow = Math.log(1 + speed)/Math.log(2);
-                        this.camera.zoom *= (code == 'KeyS') ? Math.pow(.99, pow) : Math.pow(1.01, pow);
+                        this.camera.zoom *= (code == 'KeyS' || code == 'ArrowDown') ? Math.pow(.99, pow) : Math.pow(1.01, pow);
                         this.camera.updateProjectionMatrix();
                     } else {
                         target = this.controls.target.clone();
                         const direction = target.sub(this.camera.position).normalize();
-                        dp = direction.multiplyScalar(((code == 'KeyS') ? -1 : 1) * step);
+                        dp = direction.multiplyScalar(((code == 'KeyS' || code == 'ArrowDown') ? -1 : 1) * step);
                         this.camera.position.add(dp);
                         this.updateTargetFromCamera();
                     }
                     break;
                 case 'KeyA':
+                case 'ArrowLeft':
                 case 'KeyD':
+                case 'ArrowRight':
                     vec = new Vector3(1, 0, 0);
                     vec.applyQuaternion(this.camera.quaternion);
-                    dp  = vec.multiplyScalar(((code == 'KeyA') ? -1 : 1) * step);
+                    dp  = vec.multiplyScalar(((code == 'KeyA' || code == 'ArrowLeft') ? -1 : 1) * step);
                     this.camera.position.add(dp);
                     this.updateTargetFromCamera();
                     break;
                 case 'KeyQ':
+                case 'PageUp':
                 case 'KeyE':
+                case 'PageDown':
                     vec = new Vector3(0, 1, 0);
                     vec.applyQuaternion(this.camera.quaternion);
-                    dp  = vec.multiplyScalar(((code == 'KeyE') ? -1 : 1) * step);
+                    dp  = vec.multiplyScalar(((code == 'KeyE' || code == 'PageDown') ? -1 : 1) * step);
                     this.camera.position.add(dp);
                     this.updateTargetFromCamera();
                     break;
@@ -840,10 +849,12 @@ export class Viewer {
                     this.updateTargetFromCamera();
                     break;
                 case 'KeyU':
+                case 'Comma':
                     // because controls are connected with camera.up vector, not camera matrix, we can't apply camera's z rotation
                     this.camera.up.transformDirection(tempRollMatrixRight);
                     break;
                 case 'KeyO':
+                case 'Period':
                     this.camera.up.transformDirection(tempRollMatrixLeft);
                     break;
                 case 'KeyL':
