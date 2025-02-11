@@ -261,6 +261,7 @@ export class Viewer {
         this.mouseUpListener = null;
 
         this.cameraPoses = {}; // poses to animate
+        this._posesPlayInProgress = false;
         this.cameraPosesIAOrder = []; // poses intercation order to apply delete function
         this.possibleDownKeys = [
             "KeyQ", "KeyW", "KeyE", "KeyA", "KeyS", "KeyD", "KeyI", "KeyK", "KeyU", "KeyO", "KeyL", "KeyJ",
@@ -636,18 +637,20 @@ export class Viewer {
         }
         window.addEventListener('keydown', stopTweenOnKeyDown, false);
 
-        animate(performance.now())
-
-        function animate(time) {
+        const animate = (time) => {
             group.update(time)
             const keepGoing = !group.allStopped()
             if (keepGoing) {
                 requestAnimationFrame(animate)
             } else {
+                this._posesPlayInProgress = false;
                 group = null
                 window.removeEventListener('keydown', stopTweenOnKeyDown)
             }
         }
+        
+        this._posesPlayInProgress = true;
+        animate(performance.now())
     }
 
     onKeyUp = function(e) {
@@ -691,14 +694,14 @@ export class Viewer {
                 return;
             }
             if (code === 'Space') {
-                this.playCameraPoses();
+                if (!this._posesPlayInProgress)
+                    this.playCameraPoses();
                 return;
             }
             if (code === 'Delete') {
                 this.deleteCameraPose();
                 return;
             }
-            console.log('code', code, "e", e);
 
             switch (code) {
                 case 'KeyV':
