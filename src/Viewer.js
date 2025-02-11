@@ -534,7 +534,7 @@ export class Viewer {
         const curves = [curvePosition, curveNormal, curveTarget];
         const outPoses = [];
 
-        const middlePoints = [];
+        // const middlePoints = [];
         for (let i = 0; i <= steps; i++) {
             let t = i / steps;
             let vecs = []
@@ -549,21 +549,30 @@ export class Viewer {
                 'target': vecs[2]
             
             }
-            const middlePoint = vecs[0].clone().multiplyScalar(0.34).add(vecs[2].clone().multiplyScalar(0.66));
-            // const middlePoint = vecs[0].clone().add(vecs[2]).multiplyScalar(0.5);
-            middlePoints.push(middlePoint);
+            // const middlePoint = vecs[0].clone().multiplyScalar(0.34).add(vecs[2].clone().multiplyScalar(0.66));
+            // // const middlePoint = vecs[0].clone().add(vecs[2]).multiplyScalar(0.5);
+            // middlePoints.push(middlePoint);
 
             outPoses.push(pose);
         }
 
-        let currentMiddlePoint = middlePoints[0].clone();
+        // let currentMiddlePoint = middlePoints[0].clone();
         const distances = [];
         let totalDistance = 0;
+        let p0 = outPoses[0]['position'];
+        let t0 = outPoses[0]['target'];
         for (let i = 1; i <= steps; i++) {
-            let dist = currentMiddlePoint.sub(middlePoints[i]).length();
+            let p1 = outPoses[i]['position'];
+            let t1 = outPoses[i]['target'];
+            let dp = p1.clone().sub(p0).length();
+            let dt = t1.clone().sub(t0).length();
+            let dist = Math.max(dp, dt);
+            p0 = p1;
+            t0 = t1;
+            // let dist = currentMiddlePoint.sub(middlePoints[i]).length();
             distances.push(dist);
             totalDistance += dist;
-            currentMiddlePoint = middlePoints[i].clone();
+            // currentMiddlePoint = middlePoints[i].clone();
         }
 
         const delays = distances.map(el => delay * el / totalDistance);
