@@ -648,7 +648,7 @@ export class Viewer {
                 window.removeEventListener('keydown', stopTweenOnKeyDown)
             }
         }
-        
+
         this._posesPlayInProgress = true;
         animate(performance.now())
     }
@@ -685,12 +685,16 @@ export class Viewer {
             let dp, target, vec;
             let code = e.code;
             // console.log('code', code)
+            const getDigit = code => {
+                const digit = parseInt(code.replace('Digit', ''));
+                return (digit === 0) ? 10 : digit;
+            }
             if (e.shiftKey && code.indexOf('Digit') === 0) {
-                this.addCameraPose(parseInt(code.replace('Digit', '')));
+                this.addCameraPose(getDigit(code));
                 return;
             }
             if (code.indexOf('Digit') === 0) {
-                this.goToCameraPose(parseInt(code.replace('Digit', '')));
+                this.goToCameraPose(getDigit(code));
                 return;
             }
             if (code === 'Space') {
