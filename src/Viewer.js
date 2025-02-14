@@ -708,6 +708,10 @@ export class Viewer {
             }
 
             switch (code) {
+                case 'KeyN':
+                    let els = this.camera.matrix.elements;
+                    console.log('Current up directoion is', [els[4], els[5], els[6]]);
+                    break;
                 case 'KeyV':
                     this.showControlPlane = !this.showControlPlane;
                     break;
@@ -866,6 +870,10 @@ export class Viewer {
                     break;
                 case 'KeyL':
                 case 'KeyJ':
+                    // because of lookAt method inside controls.update we should be sure that normal is perpendicular to lookAt point
+                    let els = this.camera.matrix.elements;
+                    this.camera.up.set(els[4], els[5], els[6]);
+                    //
                     this.camera.rotateOnAxis(new Vector3(0,1,0), ((code == 'KeyL') ? -1 : 1) * rstep);
                     this.updateTargetFromCamera();
                     break;
