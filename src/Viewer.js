@@ -269,6 +269,7 @@ export class Viewer {
             "PageUp", "PageDown", "Comma", "Period"
             ];
         this.currentKeyDownMoveSpeeds = this.possibleDownKeys.reduce((acc, k) => {acc[k] = 0; return acc}, {});
+        this.enableInertia = (options.enableInertia !== undefined) ? options.enableInertia : true;
         this.currentKeyDownMoveStep = 1;
         this.keyDownMoveAcceleration = 0.25;
         this.keyDownMoveFriction = 0.15;
@@ -670,7 +671,7 @@ export class Viewer {
         return function(e) {
 
             if ((!e.shiftKey) && this.possibleDownKeys.includes(e.code)) {
-                this.downKeys[e.code] = 1;
+                this.downKeys[e.code] = e.speedRate || 1;
             }
 
             forward.set(0, 0, -1);
@@ -888,16 +889,19 @@ export class Viewer {
         for (let code of this.possibleDownKeys) {
             if (this.downKeys[code]) {
                 // increase speed
-                if (this.currentKeyDownMoveSpeeds[code] == 0)
+                if ((!this.enableInertia) || (this.currentKeyDownMoveSpeeds[code] == 0))
                     this.currentKeyDownMoveSpeeds[code] = this.currentKeyDownMoveStep;
                 else
                     this.currentKeyDownMoveSpeeds[code] = Math.min(
                         this.currentKeyDownMoveSpeeds[code] + this.currentKeyDownMoveStep * this.keyDownMoveAcceleration, 
                         this.currentKeyDownMoveStep * this.keyDownMaxSpeed);
+                this.currentKeyDownMoveSpeeds[code] *= this.downKeys[code]; // in case of mobile this.downKeys[code] handles currect speedRate
 
             } else {
-                // decrease speed (friction) for not pressed keys
-                this.currentKeyDownMoveSpeeds[code] = Math.max(
+                if (!this.enableInertia)
+                    this.currentKeyDownMoveSpeeds[code] = 0;
+                else // decrease speed (friction) for not pressed keys
+                    this.currentKeyDownMoveSpeeds[code] = Math.max(
                         this.currentKeyDownMoveSpeeds[code] - Math.max(1, this.currentKeyDownMoveStep) * this.keyDownMoveFriction, 0);
             }
 
