@@ -199,6 +199,15 @@ class OrbitControls extends EventDispatcher {
             panOffset.set(0, 0, 0);
         };
 
+        this._onPointerMoveOnce = null;
+        this.setOnPointerMoveOnce = function( callback ) {
+            this._onPointerMoveOnce = callback;
+        }
+        this._onDollyOnce = null;
+        this.setOnDollyOnce = function( callback ) {
+            this._onDollyOnce = callback;
+        }
+
         // this method is exposed, but perhaps it would be better if we can make it private...
         this.update = function() {
 
@@ -611,6 +620,9 @@ class OrbitControls extends EventDispatcher {
 
         function dollyOut( dollyScale ) {
 
+            if (scope._onDollyOnce && scope._onDollyOnce())
+                scope._onDollyOnce = null;
+
             if ( scope.object.isPerspectiveCamera || scope.object.isOrthographicCamera ) {
 
                 scale /= dollyScale;
@@ -625,6 +637,9 @@ class OrbitControls extends EventDispatcher {
         }
 
         function dollyIn( dollyScale ) {
+
+            if (scope._onDollyOnce && scope._onDollyOnce())
+                scope._onDollyOnce = null;
 
             if ( scope.object.isPerspectiveCamera || scope.object.isOrthographicCamera ) {
 
@@ -1030,10 +1045,15 @@ class OrbitControls extends EventDispatcher {
 
         }
 
-        function onPointerMove( event ) {
+        function onPointerMove( event ) { 
 
             if ( scope.enabled === false ) return;
 
+            if ( scope._onPointerMoveOnce ) {
+                if (scope._onPointerMoveOnce( state )) {
+                    scope._onPointerMoveOnce = null;
+                }
+            }
             if ( event.pointerType === 'touch' ) {
 
                 onTouchMove( event );
@@ -1053,7 +1073,6 @@ class OrbitControls extends EventDispatcher {
             if ( pointers.length === 0 ) {
 
                 scope.domElement.releasePointerCapture( event.pointerId );
-
                 scope.domElement.removeEventListener( 'pointermove', onPointerMove );
                 scope.domElement.removeEventListener( 'pointerup', onPointerUp );
 

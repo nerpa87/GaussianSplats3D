@@ -629,12 +629,26 @@ export class Viewer {
         });
 
         let group = new Group(...allTweens);
+        const stopGroup = () => (group && group.getAll().forEach(item => item.stop()));
+        const onPointerMoveOnce = (state) => {
+            // later state == 0 (rotation) might be considered separately
+            console.log(`onPointerMoveOnce state=${state}`);
+            stopGroup();
+            return true;
+        }
+        const onDollyOnce = () => {
+            stopGroup();
+            return true;
+        }
+        this.controls.setOnPointerMoveOnce(onPointerMoveOnce);
+        this.controls.setOnDollyOnce(onDollyOnce);
+
         const stopTweenOnKeyDown = (e) => {
             if (this.possibleDownKeys.includes(e.code) ||
                 (e.code.indexOf('Arrow') === 0) || 
                 (e.code.indexOf('Digit') === 0) || 
                 (e.code === 'Space'))
-                group && group.getAll().forEach(item => item.stop());
+                stopGroup();
         }
         window.addEventListener('keydown', stopTweenOnKeyDown, false);
 
