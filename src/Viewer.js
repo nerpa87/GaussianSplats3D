@@ -734,7 +734,11 @@ export class Viewer {
                 case 'KeyR':
                     this.stopInertia();
                     this.controls.reset();
-
+                    if (this.debugCloud) {
+                        this.threeScene.remove(this.debugCloud);
+                        this.debugCloud = undefined;
+                        this.debugPoints = undefined;
+                    }
                     break;
                 // ...
                 case 'KeyG':
@@ -802,6 +806,29 @@ export class Viewer {
         let vec = new Vector3(0, 0, -1);
         vec.applyQuaternion(this.camera.quaternion);
         this.controls.target = vec.add(this.camera.position);
+    }
+
+    addDebugLine = function(point) {
+        const debugPoints = this.debugPoints || []; 
+
+        const scene = this.threeScene;
+
+        const geometry = new THREE.BufferGeometry();
+        const p = point.clone();
+        debugPoints.push(p);
+        this.debugPoints = debugPoints;
+
+        geometry.setFromPoints(debugPoints);
+
+        const material = new THREE.PointsMaterial( { color: 0xff0000, size: 0.05 } );
+        const pointCloud = new THREE.Points(geometry, material);
+
+        if (this.debugCloud) {
+            scene.remove(this.debugCloud)
+        }
+
+        scene.add(pointCloud);
+        this.debugCloud = pointCloud;
     }
 
     handleMultipleKeyDownKeys = function() {
@@ -889,10 +916,18 @@ export class Viewer {
                         // let els = this.camera.matrix.elements;
                         // this.camera.up.set(els[4], els[5], els[6]);
                         //
-                    this.camera.rotateOnAxis(new Vector3(0,1,0), ((code == 'KeyL') ? -1 : 1) * rstep);
+                    const rvec = this.cameraUp;  // new THREE.Vector3(0, -1, 0);
+                    const angle = ((code === 'KeyL') ? -1 : 1) * rstep;
+                    const q = new THREE.Quaternion().setFromAxisAngle(rvec, angle);
+                    this.camera.quaternion.premultiply(q);
+                    this.camera.up.applyQuaternion(q).normalize();
                     this.updateTargetFromCamera();
+
                     break;
             }
+        }
+        if (window.debugPoints) {
+            this.addDebugLine(this.controls.target);
         }
         for (let [code, speed] of Object.entries(this.currentKeyDownMoveSpeeds)) {
             if (speed > 0) 
