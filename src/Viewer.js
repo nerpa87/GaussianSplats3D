@@ -803,9 +803,15 @@ export class Viewer {
     }
 
     updateTargetFromCamera = function() {
-        let vec = new Vector3(0, 0, -1);
-        vec.applyQuaternion(this.camera.quaternion);
-        this.controls.target = vec.add(this.camera.position);
+        // prev distance from cam to target
+        const prevDist = this.camera.position.distanceTo(this.controls.target);
+
+        // normalized vector from camera to new target
+        let vec = new THREE.Vector3(0, 0, -1);
+        vec.applyQuaternion(this.camera.quaternion).normalize();
+
+        // new target = cam pos + vec * prevDist
+        this.controls.target.copy(this.camera.position).addScaledVector(vec, prevDist);
     }
 
     addDebugLine = function(point) {
