@@ -877,6 +877,7 @@ export class Viewer {
                         const direction = target.sub(this.camera.position).normalize();
                         dp = direction.multiplyScalar(((code == 'KeyS' || code == 'ArrowDown') ? -1 : 1) * step);
                         this.camera.position.add(dp);
+                        this.controls.target.add(dp);
                         this.updateTargetFromCamera();
                     }
                     break;
