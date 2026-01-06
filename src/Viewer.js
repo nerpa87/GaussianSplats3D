@@ -679,8 +679,6 @@ export class Viewer {
         const forward = new THREE.Vector3();
         const tempRollMatrixLeft = new THREE.Matrix4();
         const tempRollMatrixRight = new THREE.Matrix4();
-        const tempPitchMatrixTop = new THREE.Matrix4();
-        const tempPitchMatrixBottom = new THREE.Matrix4();
 
         return function(e) {
 
@@ -692,10 +690,6 @@ export class Viewer {
             forward.transformDirection(this.camera.matrixWorld);
             tempRollMatrixLeft.makeRotationAxis(forward, Math.PI / 128);
             tempRollMatrixRight.makeRotationAxis(forward, -Math.PI / 128);
-            forward.set(1, 0, 0);
-            forward.transformDirection(this.camera.matrixWorld);
-            tempPitchMatrixTop.makeRotationAxis(forward, Math.PI / 128);
-            tempPitchMatrixBottom.makeRotationAxis(forward, -Math.PI / 128);
 
             let dp, target, vec;
             let code = e.code;
@@ -903,11 +897,28 @@ export class Viewer {
                     break;
                 // rotate camera
                 case 'KeyI':
-                case 'KeyK':
-                    this.camera.up.transformDirection((code == 'KeyK') ? tempPitchMatrixBottom : tempPitchMatrixTop);
-                    this.camera.rotateOnAxis(new Vector3(1,0,0), ((code == 'KeyK') ? -1 : 1) *  rstep);
-                    this.updateTargetFromCamera();
+                case 'KeyK': {
+                    const angle = ((code === 'KeyI') ? 1 : -1) * rstep;
+                    // view direction
+                    const viewDir = new THREE.Vector3().subVectors(this.controls.target, this.camera.position);
+                    // right axis = view × up
+                    const right = new THREE.Vector3().crossVectors(viewDir, this.camera.up).normalize();
+
+                    const polar = viewDir.angleTo(this.camera.up);
+                    // чем ближе к 0 или π — тем меньше шаг
+                    const softness = Math.sin(polar);
+                    const effectiveStep = angle * softness;
+
+                    if (Math.abs(effectiveStep) > 1e-5) {
+                        // rotate view direction
+                        const q = new THREE.Quaternion().setFromAxisAngle(right, effectiveStep);
+                        viewDir.applyQuaternion(q);
+                    }
+
+                    // setting target only, no pitch
+                    this.controls.target.copy(this.camera.position).add(viewDir);  // not calling updateTargetFromCamera!
                     break;
+                }
                 case 'KeyU':
                 case 'Comma':
                     // because controls are connected with camera.up vector, not camera matrix, we can't apply camera's z rotation
